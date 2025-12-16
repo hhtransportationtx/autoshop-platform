@@ -20,12 +20,3 @@ services:
     envVars:
       - key: AI_SERVICE_SECRET
         sync: false
-
-  - type: redis
-    name: autopilot-redis
-    plan: starter
-    ipAllowList: []
-
-databases:
-  - name: autopilot-postgres
-    plan: basic 
