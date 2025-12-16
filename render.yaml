@@ -3,7 +3,7 @@ services:
     name: api-core
     env: node
     rootDir: core-api
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install
     startCommand: npm run start:prod
     healthCheckPath: /health
     envVars:
