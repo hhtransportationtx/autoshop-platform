@@ -1,8 +1,25 @@
 const express = require("express");
+const { Pool } = require("pg");
 const app = express();
 
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
+});
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+app.get("/db/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.json({ status: "db ok" });
+  } catch (err) {
+    res.status(500).json({
+      status: "db error",
+      error: err.message
+    });
+  }
 });
 app.get("/ai/health", async (req, res) => {
   try {
