@@ -28,6 +28,4 @@ services:
 
 databases:
   - name: autopilot-postgres
-    plan: starter
-    databaseName: autopilot
-    user: autopilot
+    plan: basic 
