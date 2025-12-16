@@ -6,9 +6,9 @@
     "start": "node index.js",
     "start:prod": "node index.js"
   },
-  ""dependencies": {
+  ""dependencies"": {
   "express": "^4.19.2",
   "node-fetch": "^2.6.7",
   "pg": "^8.11.5"
   }
-  }
+  
