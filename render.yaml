@@ -23,7 +23,7 @@ services:
 
   - type: redis
     name: autopilot-redis
-    plan: basic
+    plan: starter
     ipAllowList: []
 
 databases:
