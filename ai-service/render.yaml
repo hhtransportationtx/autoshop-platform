@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: api-core
+    env: node
+    rootDir: core-api
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: AI_SERVICE_SECRET
+        sync: false
+
+  - type: web
+    name: ai-service
+    env: python
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: AI_SERVICE_SECRET
+        sync: false
+
+  - type: redis
+    name: autopilot-redis
+    plan: starter
+    ipAllowList: []
+
+databases:
+  - name: autopilot-postgres
+    plan: starter
+    databaseName: autopilot
+    user: autopilot
