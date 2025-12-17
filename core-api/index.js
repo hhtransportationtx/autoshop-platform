@@ -86,4 +86,16 @@ app.patch("/work-orders/:id/status", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
+// GET all vehicles
+app.get("/vehicles", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, make, model, year FROM vehicles ORDER BY id"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch vehicles" });
+  }
+});
 app.listen(PORT, () => console.log("API Core running on port", PORT));
