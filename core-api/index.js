@@ -127,3 +127,17 @@ app.get("/me", authRequired, async (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`API Core running on port ${PORT}`));
+// ---- Customers API ----
+app.get("/customers", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name, phone, email, notes FROM customers ORDER BY id"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch customers",
+      details: err.message,
+    });
+  }
+});
