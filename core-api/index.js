@@ -86,6 +86,7 @@ app.patch("/work-orders/:id/status", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log("API Core running on port", PORT));
 // GET all vehicles
 app.get("/vehicles", async (req, res) => {
   try {
@@ -98,4 +99,3 @@ app.get("/vehicles", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch vehicles" });
   }
 });
-app.listen(PORT, () => console.log("API Core running on port", PORT));
