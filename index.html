@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mechanic Dashboard</title>
+  <meta charset="UTF-8" />
+</head>
+<body>
+  <h1>Mechanic Dashboard</h1>
+
+  <button onclick="loadCustomers()">Load Customers</button>
+
+  <pre id="output">No data loaded</pre>
+
+  <script>
+    async function loadCustomers() {
+      const res = await fetch("https://autoshop-api.onrender.com/customers");
+      const data = await res.json();
+      document.getElementById("output").textContent =
+        JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
