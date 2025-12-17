@@ -8,6 +8,35 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+const express = require("express");
+const { Pool } = require("pg");
+
+const app = express();
+app.use(express.json());
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// ✅ ADD THIS EXACTLY HERE
+app.get("/vehicles", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, make, model, year FROM vehicles ORDER BY id"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// ❗ NOTHING GOES BELOW THIS EXCEPT app.listen
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log("API Core running on port", PORT);
+});
 
 // IMPORTANT: set DATABASE_URL in Render Environment Variables
 const pool = new Pool({
