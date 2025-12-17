@@ -8,6 +8,13 @@ const { Pool } = require("pg");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "api-core",
+    time: new Date().toISOString()
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 
