@@ -1,150 +1,89 @@
 const express = require("express");
-const fetch = require("node-fetch");
 const cors = require("cors");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
 const { Pool } = require("pg");
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    service: "api-core",
-    time: new Date().toISOString()
-  });
-});
 
-const PORT = process.env.PORT || 3000;
-
-// --- DB ---
+// IMPORTANT: set DATABASE_URL in Render Environment Variables
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
-// --- Helpers ---
-function signToken(user) {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET missing");
-  return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    secret,
-    { expiresIn: "7d" }
-  );
-}
+app.get("/", (req, res) => res.json({ status: "ok" }));
 
-function authRequired(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-  if (!token) return res.status(401).json({ error: "Missing token" });
-
+// -------- VEHICLES --------
+app.get("/vehicles", async (req, res) => {
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
-    return next();
-  } catch (e) {
-    return res.status(401).json({ error: "Invalid token" });
-  }
-}
-
-function roleRequired(role) {
-  return (req, res, next) => {
-    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-    if (req.user.role !== role) return res.status(403).json({ error: "Forbidden" });
-    next();
-  };
-}
-
-// --- Basic routes ---
-app.get("/", (req, res) => {
-  res.status(200).send("API Core is running ✅");
-});
-
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
-});
-
-app.get("/db/health", async (req, res) => {
-  try {
-    await pool.query("SELECT 1");
-    res.json({ status: "db ok" });
-  } catch (err) {
-    res.status(500).json({ status: "db error", error: err.message });
-  }
-});
-
-app.get("/ai/health", async (req, res) => {
-  try {
-    const aiUrl = process.env.AI_SERVICE_URL;
-    const response = await fetch(`${aiUrl}/health`);
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({
-      status: "error",
-      message: "AI service unreachable",
-      error: err.message,
-    });
-  }
-});
-
-// --- AUTH ---
-app.post("/auth/register", authRequired, roleRequired("owner"), async (req, res) => {
-  try {
-    const { email, password, role = "manager" } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "email + password required" });
-
-    const exists = await pool.query("SELECT id FROM users WHERE email=$1", [email]);
-    if (exists.rows.length) return res.status(409).json({ error: "Email already exists" });
-
-    const hash = await bcrypt.hash(password, 10);
-    const created = await pool.query(
-      "INSERT INTO users(email, password_hash, role) VALUES($1,$2,$3) RETURNING id, email, role",
-      [email, hash, role]
+    const { rows } = await pool.query(
+      "SELECT id, make, model, year FROM vehicles ORDER BY id ASC"
     );
-
-    res.json({ user: created.rows[0] });
+    res.json(rows);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-app.post("/auth/login", async (req, res) => {
+app.post("/vehicles", async (req, res) => {
+  const { make, model, year } = req.body;
   try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "email + password required" });
-
-    const q = await pool.query("SELECT id,email,password_hash,role FROM users WHERE email=$1", [email]);
-    if (!q.rows.length) return res.status(401).json({ error: "Invalid login" });
-
-    const user = q.rows[0];
-    const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: "Invalid login" });
-
-    const token = signToken({ id: user.id, email: user.email, role: user.role });
-    res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
+    const { rows } = await pool.query(
+      "INSERT INTO vehicles (make, model, year) VALUES ($1,$2,$3) RETURNING *",
+      [make, model, year]
+    );
+    res.status(201).json(rows[0]);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-app.get("/me", authRequired, async (req, res) => {
-  res.json({ me: req.user });
-});
-
-app.listen(PORT, () => console.log(`API Core running on port ${PORT}`));
-// ---- Customers API ----
-app.get("/customers", async (req, res) => {
+// -------- WORK ORDERS --------
+app.get("/work-orders", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT id, name, phone, email, notes FROM customers ORDER BY id"
+    const { rows } = await pool.query(
+      `SELECT id, customer_id, vehicle_id, status, notes, parts_total, tax_total, grand_total, labor_total, created_at
+       FROM work_orders
+       ORDER BY id DESC`
     );
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({
-      error: "Failed to fetch customers",
-      details: err.message,
-    });
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
+
+app.post("/work-orders", async (req, res) => {
+  const { customer_id, vehicle_id, status, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO work_orders (customer_id, vehicle_id, status, notes)
+       VALUES ($1,$2,$3,$4)
+       RETURNING *`,
+      [customer_id || null, vehicle_id, status || "open", notes || ""]
+    );
+    res.status(201).json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.patch("/work-orders/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const { rows } = await pool.query(
+      "UPDATE work_orders SET status=$1 WHERE id=$2 RETURNING *",
+      [status, id]
+    );
+    res.json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log("API Core running on port", PORT));
