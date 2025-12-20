@@ -150,6 +150,44 @@ app.put("/api/work-orders/:id", async (req, res) => {
     res.status(500).json({ error: e.message }); 
   }
   });
+// ✅ GET SINGLE WORK ORDER BY ID
+app.get("/api/work-orders/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { rows } = await pool.query(
+      `
+      SELECT
+        wo.id,
+        c.name AS customer_name,
+        v.make,
+        v.model,
+        v.year,
+        wo.status,
+        wo.notes,
+        wo.labor_total,
+        wo.parts_total,
+        wo.tax_total,
+        wo.grand_total,
+        wo.created_at
+      FROM work_orders wo
+      JOIN customers c ON c.id = wo.customer_id
+      JOIN vehicles v ON v.id = wo.vehicle_id
+      WHERE wo.id = $1
+      `,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Work order not found" });
+    }
+
+    res.json(rows[0]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
 //🚨 app.listen MUST BE LAST
 const PORT = process.env.PORT || 10000;
 
