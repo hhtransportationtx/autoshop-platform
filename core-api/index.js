@@ -101,18 +101,10 @@ app.post("/api/work-orders", async (req, res) => {
 });
 // 🚨 app.listen MUST BE LAST
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, (app.post("/api/work-orders", async (req, res) => {
-  const {
-    customer_id,
-    vehicle_id,
-    notes,
-    labor_total = 0,
-    parts_total = 0,
-    tax_total = 0
-  } = req.body;
-
-  try {
-    const { rows } = await pool.query(
+app.listen(PORT, (app.post,() => {
+  console.log(`API CORE running on port $
+  {PORT} `);
+});
       `
       INSERT INTO work_orders
       (customer_id, vehicle_id, notes, labor_total, parts_total, tax_total, grand_total)
