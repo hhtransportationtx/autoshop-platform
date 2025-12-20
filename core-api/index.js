@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 });
 
 // ✅ VEHICLES ROUTE — MUST BE ABOVE app.listen
-app.get("/vehicles", async (req, res) => {
+app.get("/api/vehicles", async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT id, make, model, year FROM vehicles ORDER BY id ASC"
