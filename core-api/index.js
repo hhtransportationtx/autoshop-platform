@@ -59,6 +59,46 @@ app.get("/api/work-orders", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+// ➕ CREATE WORK ORDER
+app.post("/api/work-orders", async (req, res) => {
+  try {
+    const {
+      customer_id,
+      vehicle_id,
+      notes,
+      labor_total = 0,
+      parts_total = 0,
+      tax_total = 0
+    } = req.body;
+
+    const grand_total =
+      Number(labor_total) + Number(parts_total) + Number(tax_total);
+
+    const { rows } = await pool.query(
+      `
+      INSERT INTO work_orders
+        (customer_id, vehicle_id, notes, labor_total, parts_total, tax_total, grand_total)
+      VALUES
+        ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+      `,
+      [
+        customer_id,
+        vehicle_id,
+        notes,
+        labor_total,
+        parts_total,
+        tax_total,
+        grand_total
+      ]
+    );
+
+    res.status(201).json(rows[0]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
 // 🚨 app.listen MUST BE LAST
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
