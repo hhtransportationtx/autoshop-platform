@@ -101,6 +101,31 @@ app.post("/api/work-orders", async (req, res) => {
 });
 // 🚨 app.listen MUST BE LAST
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
+app.listen(PORT, (app.post("/api/work-orders", async (req, res) => {
+  const {
+    customer_id,
+    vehicle_id,
+    notes,
+    labor_total = 0,
+    parts_total = 0,
+    tax_total = 0
+  } = req.body;
+
+  try {
+    const { rows } = await pool.query(
+      `
+      INSERT INTO work_orders
+      (customer_id, vehicle_id, notes, labor_total, parts_total, tax_total, grand_total)
+      VALUES ($1, $2, $3, $4, $5, $6, $4 + $5 + $6)
+      RETURNING *;
+      `,
+      [customer_id, vehicle_id, notes, labor_total, parts_total, tax_total]
+    );
+
+    res.status(201).json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});) => {
   console.log(`API Core running on port ${PORT}`);
 });
