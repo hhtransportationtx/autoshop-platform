@@ -99,7 +99,57 @@ app.post("/api/work-orders", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
-// 🚨 app.listen MUST BE LAST
+// // ✅ UPDATE WORK ORDER
+app.put("/api/work-orders/:id", async (req, res) => {
+  const { id } = req.params;
+  const {
+    status,
+    notes,
+    labor_total,
+    parts_total,
+    tax_total
+  } = req.body;
+
+  const grand_total =
+    Number(labor_total || 0) +
+    Number(parts_total || 0) +
+    Number(tax_total || 0);
+
+  try {
+    const { rows } = await pool.query(
+      `
+      UPDATE work_orders
+      SET
+        status = COALESCE($1, status),
+        notes = COALESCE($2, notes),
+        labor_total = COALESCE($3, labor_total),
+        parts_total = COALESCE($4, parts_total),
+        tax_total = COALESCE($5, tax_total),
+        grand_total = $6
+      WHERE id = $7
+      RETURNING *
+      `,
+      [
+        status,
+        notes,
+        labor_total,
+        parts_total,
+        tax_total,
+        grand_total,
+        id
+      ]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Work order not found" });
+    }
+
+    res.json(rows[0]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});🚨 app.listen MUST BE LAST
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
