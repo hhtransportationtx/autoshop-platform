@@ -147,7 +147,8 @@ app.put("/api/work-orders/:id", async (req, res) => {
     res.json(rows[0]);
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: e.message }); 
+  }
   });
 //🚨 app.listen MUST BE LAST
 const PORT = process.env.PORT || 10000;
