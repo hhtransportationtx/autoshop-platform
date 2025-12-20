@@ -31,7 +31,34 @@ app.get("/api/vehicles", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+// ✅ WORK ORDERS WITH CUSTOMER + VEHICLE
+app.get("/api/work-orders", async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        wo.id,
+        c.name AS customer_name,
+        v.make,
+        v.model,
+        v.year,
+        wo.status,
+        wo.notes,
+        wo.labor_total,
+        wo.parts_total,
+        wo.tax_total,
+        wo.grand_total,
+        wo.created_at
+      FROM work_orders wo
+      JOIN customers c ON c.id = wo.customer_id
+      JOIN vehicles v ON v.id = wo.vehicle_id
+      ORDER BY wo.created_at DESC
+    `);
 
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 // 🚨 app.listen MUST BE LAST
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
