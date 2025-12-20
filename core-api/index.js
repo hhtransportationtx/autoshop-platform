@@ -16,8 +16,8 @@ const pool = new Pool({
 });
 
 // health check
-app.get("/", (req, res) => {
-  res.json({ status: "ok" });
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
 // ✅ VEHICLES ROUTE — MUST BE ABOVE app.listen
